@@ -1,6 +1,7 @@
 // src/auth.js
-// یه OAuth2 client مشترک می‌سازه که هم برای Drive و هم YouTube API استفاده می‌شه.
-// با استفاده از refresh_token خودش access_token تازه می‌گیره، نیازی به لاگین دستی دوباره نیست.
+// Builds a shared OAuth2 client used by both the Drive and YouTube API clients.
+// Uses the stored refresh_token to silently obtain fresh access tokens —
+// no manual re-login required after the initial setup.
 
 const { google } = require('googleapis');
 
