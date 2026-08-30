@@ -24,14 +24,19 @@ function writeState(state) {
 // actually succeeds, so failed attempts don't burn a slot.
 function computeNextPublishSlot() {
   const state = readState();
-  const hour = parseInt(process.env.PUBLISH_HOUR || '18', 10);
+  const hour = parseInt(process.env.PUBLISH_HOUR || '19', 10);
   const minute = parseInt(process.env.PUBLISH_MINUTE || '0', 10);
   const daysBetween = parseInt(process.env.DAYS_BETWEEN_UPLOADS || '1', 10);
 
   let baseDate;
   if (state.lastScheduledDate) {
+    // Already scheduled at least one video before -> just add the interval.
     baseDate = new Date(state.lastScheduledDate);
     baseDate.setDate(baseDate.getDate() + daysBetween);
+  } else if (process.env.PUBLISH_START_DATE) {
+    // First video ever scheduled -> use the configured start date
+    // (format: YYYY-MM-DD), e.g. PUBLISH_START_DATE=2026-09-01
+    baseDate = new Date(`${process.env.PUBLISH_START_DATE}T00:00:00`);
   } else {
     baseDate = new Date();
     // If today's publish time has already passed, start from tomorrow.
