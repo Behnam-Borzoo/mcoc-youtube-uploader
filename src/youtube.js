@@ -1,5 +1,5 @@
 // src/youtube.js
-// مسئول: آپلود resumable ویدیو به یوتیوب، با متادیتا و publishAt
+// Handles the resumable upload to YouTube, with metadata and publishAt scheduling.
 
 const { google } = require('googleapis');
 const { getAuthClient } = require('./auth');
@@ -10,7 +10,7 @@ function getYoutubeClient() {
 
 /**
  * @param {object} opts
- * @param {ReadableStream} opts.fileStream - stream فایل ویدیو (از Drive میاد)
+ * @param {ReadableStream} opts.fileStream - video file stream (comes from Drive)
  * @param {string} opts.title
  * @param {string} opts.description
  * @param {string[]} opts.tags
@@ -29,7 +29,7 @@ async function uploadVideo({ fileStream, title, description, tags, publishAt }) 
         categoryId: '20', // Gaming
       },
       status: {
-        privacyStatus: 'private', // اجباریه وقتی publishAt ست میشه
+        privacyStatus: 'private', // required when publishAt is set
         publishAt,
         selfDeclaredMadeForKids: false,
       },
@@ -39,7 +39,7 @@ async function uploadVideo({ fileStream, title, description, tags, publishAt }) 
     },
   });
 
-  return res.data; // شامل video id و بقیه اطلاعات
+  return res.data; // includes the new video's id
 }
 
 module.exports = { uploadVideo };
