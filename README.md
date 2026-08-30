@@ -67,6 +67,7 @@ pm2 save
 
 For later updates:
 ```bash
+chmod +x deploy.sh
 ./deploy.sh
 ```
 
