@@ -19,8 +19,10 @@ function writeState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-// Computes the next publish datetime based on .env settings.
-function getNextPublishSlot() {
+// Computes the next publish datetime based on .env settings, WITHOUT
+// persisting it yet. Call commitPublishSlot() only after the upload
+// actually succeeds, so failed attempts don't burn a slot.
+function computeNextPublishSlot() {
   const state = readState();
   const hour = parseInt(process.env.PUBLISH_HOUR || '18', 10);
   const minute = parseInt(process.env.PUBLISH_MINUTE || '0', 10);
@@ -43,9 +45,12 @@ function getNextPublishSlot() {
 
   baseDate.setHours(hour, minute, 0, 0);
 
-  writeState({ lastScheduledDate: baseDate.toISOString() });
-
   return baseDate.toISOString();
 }
 
-module.exports = { getNextPublishSlot };
+// Persists a slot as taken. Call this only after a successful upload.
+function commitPublishSlot(isoDate) {
+  writeState({ lastScheduledDate: isoDate });
+}
+
+module.exports = { computeNextPublishSlot, commitPublishSlot };
