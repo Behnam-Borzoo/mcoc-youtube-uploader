@@ -114,7 +114,7 @@ async function runCleanup() {
   }
 }
 
-const checkCron = process.env.CHECK_CRON || '0 * * * *'; // default: every hour
+const checkCron = process.env.CHECK_CRON || '0 9,21 * * *'; // default: twice a day
 const cleanupCron = process.env.CLEANUP_CRON || '0 3 * * *'; // default: daily at 03:00
 
 console.log(`YouTube uploader service started.`);
