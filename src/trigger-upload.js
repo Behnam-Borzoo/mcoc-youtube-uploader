@@ -6,12 +6,22 @@
 require('dotenv').config();
 const { listPendingVideos, getFileStream, moveToUploadedFolder } = require('./drive');
 const { uploadVideo } = require('./youtube');
-const { getNextPublishSlot } = require('./schedule');
+const { computeNextPublishSlot, commitPublishSlot } = require('./schedule');
+
+const YOUTUBE_TITLE_MAX_LENGTH = 100;
+const SUFFIX = ' | BEHNAM BORZOO';
 
 function buildMetadataFromFilename(filename) {
-  const base = filename.replace(/\.[^/.]+$/, '');
-  const title = `${base.replace(/_/g, ' ')} | BEHNAM BORZOO`;
+  const base = filename.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+
+  const maxBaseLength = YOUTUBE_TITLE_MAX_LENGTH - SUFFIX.length;
+  const truncatedBase =
+    base.length > maxBaseLength ? base.slice(0, maxBaseLength - 1).trim() + '…' : base;
+  const title = `${truncatedBase}${SUFFIX}`;
+
   const description = [
+    base,
+    '',
     'MCOC (Marvel Contest of Champions) stream VOD - Battlegrounds / Arena',
     '',
     'Follow on Twitch: twitch.tv/BehnamBorzoo',
@@ -38,11 +48,12 @@ async function main() {
   });
 
   const { title, description, tags } = buildMetadataFromFilename(file.name);
-  const publishAt = getNextPublishSlot();
+  const publishAt = computeNextPublishSlot();
 
   console.log(`  -> Scheduled publish time: ${publishAt}`);
 
   const result = await uploadVideo({ fileStream: stream, title, description, tags, publishAt });
+  commitPublishSlot(publishAt);
   console.log(`  -> Upload successful. Video ID: ${result.id}`);
 
   await moveToUploadedFolder(file.id);
