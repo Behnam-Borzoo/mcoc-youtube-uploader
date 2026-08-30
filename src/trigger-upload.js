@@ -5,7 +5,7 @@
 
 require('dotenv').config();
 const { listPendingVideos, getFileStream, moveToUploadedFolder } = require('./drive');
-const { uploadVideo } = require('./youtube');
+const { uploadVideo, addVideoToPlaylist } = require('./youtube');
 const { computeNextPublishSlot, commitPublishSlot } = require('./schedule');
 
 const YOUTUBE_TITLE_MAX_LENGTH = 100;
@@ -73,6 +73,16 @@ async function main() {
   const result = await uploadVideo({ fileStream: stream, title, description, tags, publishAt });
   commitPublishSlot(publishAt);
   console.log(`  -> Upload successful. Video ID: ${result.id}`);
+
+  const playlistId = process.env.YOUTUBE_PLAYLIST_ID;
+  if (playlistId) {
+    try {
+      await addVideoToPlaylist(result.id, playlistId);
+      console.log(`  -> Added to playlist.`);
+    } catch (err) {
+      console.error(`  -> Failed to add video to playlist:`, err.message);
+    }
+  }
 
   await moveToUploadedFolder(file.id);
   console.log(`  -> File moved to the "uploaded" folder.`);
