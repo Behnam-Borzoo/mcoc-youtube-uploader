@@ -52,8 +52,8 @@ ID پوشه از URL گرفته می‌شه:
 
 ### ۵. دیپلوی روی VPS
 ```bash
-git clone <repo-url>
-cd moco-youtube-uploader
+git clone https://github.com/Behnam-Borzoo/mcoc-youtube-uploader/blob/main/deploy.sh
+cd mcoc-youtube-uploader
 npm install --production
 cp .env.example .env  # و پرش کن
 pm2 start ecosystem.config.js
