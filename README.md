@@ -1,79 +1,87 @@
 # MCOC YouTube Uploader
 
-آپلود خودکار VOD های تویچ به یوتیوب با زمان‌بندی، از طریق Google Drive به‌عنوان واسط.
+Automated pipeline that uploads Twitch VODs to YouTube on a schedule, using Google Drive as an intermediary.
 
-## معماری
+## Architecture
 
 ```
-آپلود دستی فایل به پوشه مشخص در Google Drive
+You drop a video file into the "import" folder on Google Drive
         ↓
-اسکریپت روی VPS (با cron) پوشه رو چک می‌کنه
+The VPS script (on a cron schedule) checks that folder for new files
         ↓
-فایل به‌صورت stream (بدون ذخیره کامل روی دیسک) به YouTube API پاس داده می‌شه
+The file is streamed (never fully written to disk) straight into the YouTube API
         ↓
-آپلود با privacyStatus=private و publishAt (زمان‌بندی‌شده)
+Uploaded with privacyStatus=private and a scheduled publishAt time
         ↓
-بعد از آپلود موفق، فایل از Drive حذف/جابجا می‌شه
+On success, the file is moved to the "uploaded" folder
         ↓
-یوتیوب سر وقت خودکار ویدیو رو Public می‌کنه
+YouTube automatically makes the video public at the scheduled time
+        ↓
+After 3 days in the "uploaded" folder, a cleanup job deletes the file
 ```
 
-## راه‌اندازی اولیه
+## Initial Setup
 
-### ۱. Google Cloud Setup
-- پروژه بساز در [console.cloud.google.com](https://console.cloud.google.com)
-- فعال کن: **YouTube Data API v3** و **Google Drive API**
-- OAuth Consent Screen رو تنظیم کن (External, خودت رو به‌عنوان Test User اضافه کن)
-- یه OAuth Client ID از نوع **Desktop app** بساز و JSON رو دانلود کن
+### 1. Google Cloud Setup
+- Create a project at [console.cloud.google.com](https://console.cloud.google.com)
+- Enable: **YouTube Data API v3** and **Google Drive API**
+- Configure the OAuth Consent Screen (External type, add yourself as a Test User)
+- Create an OAuth Client ID of type **Desktop app** and download the JSON
 
-### ۲. گرفتن Refresh Token
+### 2. Get a Refresh Token
 ```bash
 npm install
 cp .env.example .env
-# GOOGLE_CLIENT_ID و GOOGLE_CLIENT_SECRET رو توی .env پر کن
+# fill in GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env
 npm run get-token
 ```
-لینکی که چاپ می‌شه رو باز کن، لاگین کن، و `GOOGLE_REFRESH_TOKEN` رو توی `.env` بذار.
+Open the printed link, log in, and copy `GOOGLE_REFRESH_TOKEN` into `.env`.
 
-> این مرحله باید روی سیستمی با مرورگر انجام بشه (نه لزوماً VPS).
+> This step needs a browser, so it doesn't have to run on the VPS.
 
-### ۳. تنظیم پوشه‌های Drive
-- یه پوشه بساز برای فایل‌های در انتظار آپلود، ID اش رو بذار توی `DRIVE_WATCH_FOLDER_ID`
-- (اختیاری) یه پوشه دیگه برای آرشیو فایل‌های آپلودشده، ID اش رو بذار توی `DRIVE_UPLOADED_FOLDER_ID`
+### 3. Set Up Drive Folders
+- Create an **import** folder for new VODs → put its ID in `DRIVE_IMPORT_FOLDER_ID`
+- Create an **uploaded** folder for archived files → put its ID in `DRIVE_UPLOADED_FOLDER_ID`
 
-ID پوشه از URL گرفته می‌شه:
-`drive.google.com/drive/folders/`**`این-بخش`**
+Folder ID comes from the URL:
+`drive.google.com/drive/folders/`**`THIS-PART`**
 
-### ۴. تنظیم زمان‌بندی
-توی `.env`:
-- `CHECK_CRON`: هر چند وقت یک‌بار Drive چک بشه (پیش‌فرض: هر ساعت)
-- `PUBLISH_HOUR` / `PUBLISH_MINUTE`: ساعت پابلیک‌شدن ویدیو
-- `DAYS_BETWEEN_UPLOADS`: فاصله روزها بین هر ویدیو
+### 4. Configure Scheduling
+In `.env`:
+- `CHECK_CRON`: how often to check the import folder (default: every hour)
+- `CLEANUP_CRON`: how often to run the cleanup job (default: daily at 03:00)
+- `CLEANUP_AFTER_DAYS`: how many days a file stays in "uploaded" before deletion (default: 3)
+- `PUBLISH_HOUR` / `PUBLISH_MINUTE`: time of day videos go public
+- `DAYS_BETWEEN_UPLOADS`: days between each scheduled video
 
-### ۵. دیپلوی روی VPS
+### 5. Deploy to VPS
 ```bash
-git clone https://github.com/Behnam-Borzoo/mcoc-youtube-uploader.git
+git clone <repo-url>
 cd mcoc-youtube-uploader
 npm install --production
-cp .env.example .env  # و پرش کن
+cp .env.example .env  # and fill it in
 pm2 start ecosystem.config.js
 pm2 save
 ```
 
-برای آپدیت‌های بعدی:
+For later updates:
 ```bash
 ./deploy.sh
 ```
 
-## استفاده روزمره
+## Daily Usage
 
-فقط کافیه VOD رو (به‌صورت mp4) توی پوشه Drive مشخص‌شده آپلود کنی. بقیه کار خودکاره.
+Just drop the VOD (as mp4) into the import folder on Drive. Everything else runs automatically:
+1. Uploaded to YouTube (private + scheduled)
+2. Moved to the "uploaded" folder
+3. Deleted from "uploaded" after `CLEANUP_AFTER_DAYS` days
 
-نام‌گذاری فایل پیشنهادی: `YYYY-MM-DD_MCOC_Battlegrounds.mp4`
-(این اسم مستقیم به‌عنوان عنوان ویدیوی یوتیوب استفاده می‌شه)
+Suggested filename convention: `YYYY-MM-DD_MCOC_Battlegrounds.mp4`
+(this is used directly as the YouTube video title)
 
-## نکات مهم
+## Notes
 
-- **Quota روزانه YouTube API**: پیش‌فرض ۱۰,۰۰۰ واحد، هر آپلود ~۱۶۰۰ واحد مصرف می‌کنه (~۶ آپلود در روز)
-- فایل باید **mimeType** ویدیویی داشته باشه تا در پوشه Drive شناسایی بشه
-- اسکریپت در هر اجرای cron فقط **یک فایل** رو پردازش می‌کنه، تا کنترل‌شده باشه
+- **YouTube API daily quota**: default 10,000 units, each upload costs ~1,600 units (~6 uploads/day)
+- The file needs a video **mimeType** to be detected in the import folder
+- Each cron run processes only **one file**, to keep quota and bandwidth usage predictable
+- The cleanup job checks Drive's `modifiedTime` on files in the "uploaded" folder, which updates automatically when a file is moved there
