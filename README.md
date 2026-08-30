@@ -48,11 +48,12 @@ Folder ID comes from the URL:
 
 ### 4. Configure Scheduling
 In `.env`:
-- `CHECK_CRON`: how often to check the import folder (default: every hour)
+- `CHECK_CRON`: how often to check the import folder (default: twice a day, 09:00 and 21:00)
 - `CLEANUP_CRON`: how often to run the cleanup job (default: daily at 03:00)
 - `CLEANUP_AFTER_DAYS`: how many days a file stays in "uploaded" before deletion (default: 3)
-- `PUBLISH_HOUR` / `PUBLISH_MINUTE`: time of day videos go public
-- `DAYS_BETWEEN_UPLOADS`: days between each scheduled video
+- `PUBLISH_HOUR` / `PUBLISH_MINUTE`: time of day videos go public (default: 19:00)
+- `PUBLISH_START_DATE`: date (YYYY-MM-DD) the very first video should go public — only affects the first video ever scheduled; every one after that follows automatically at `DAYS_BETWEEN_UPLOADS` intervals. Leave empty to start as soon as possible instead.
+- `DAYS_BETWEEN_UPLOADS`: days between each scheduled video (default: 1, i.e. one video per day)
 
 ### 5. Deploy to VPS
 ```bash
@@ -76,8 +77,8 @@ Just drop the VOD (as mp4) into the import folder on Drive. Everything else runs
 2. Moved to the "uploaded" folder
 3. Deleted from "uploaded" after `CLEANUP_AFTER_DAYS` days
 
-Suggested filename convention: `YYYY-MM-DD_MCOC_Battlegrounds.mp4`
-(this is used directly as the YouTube video title)
+Suggested filename convention: `DD.MM.YYYY |Title Here` (e.g. `04.08.2026 |Marvel Contest of Champions Community - Live Gameplay - AQ, AW, Battlegrounds, Events & Arena.mp4`)
+(this is used directly as the YouTube video title — it's automatically truncated to YouTube's 100-character limit if too long, with the full name kept in the video description)
 
 ## Notes
 
