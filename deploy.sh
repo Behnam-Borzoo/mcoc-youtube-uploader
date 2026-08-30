@@ -1,17 +1,17 @@
 #!/bin/bash
 # deploy.sh
-# اجرا کن روی VPS برای آپدیت و ری‌استارت سرویس
+# Run this on the VPS to pull the latest changes and restart the service.
 
 set -e
 
-echo "در حال دریافت آخرین تغییرات از GitHub..."
+echo "Pulling latest changes from GitHub..."
 git pull origin main
 
-echo "نصب dependencies..."
+echo "Installing dependencies..."
 npm install --production
 
-echo "ری‌استارت سرویس با PM2..."
+echo "Restarting service with PM2..."
 pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
 
-echo "انجام شد. وضعیت سرویس:"
-pm2 status moco-youtube-uploader
+echo "Done. Service status:"
+pm2 status mcoc-youtube-uploader
