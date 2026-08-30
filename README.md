@@ -52,7 +52,7 @@ ID پوشه از URL گرفته می‌شه:
 
 ### ۵. دیپلوی روی VPS
 ```bash
-git clone https://github.com/Behnam-Borzoo/mcoc-youtube-uploader/blob/main/deploy.sh
+git clone https://github.com/Behnam-Borzoo/mcoc-youtube-uploader.git
 cd mcoc-youtube-uploader
 npm install --production
 cp .env.example .env  # و پرش کن
