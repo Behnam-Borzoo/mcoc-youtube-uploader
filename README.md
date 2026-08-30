@@ -56,7 +56,7 @@ In `.env`:
 
 ### 5. Deploy to VPS
 ```bash
-git clone <repo-url>
+git clone https://github.com/Behnam-Borzoo/mcoc-youtube-uploader.git
 cd mcoc-youtube-uploader
 npm install --production
 cp .env.example .env  # and fill it in
