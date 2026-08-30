@@ -42,4 +42,26 @@ async function uploadVideo({ fileStream, title, description, tags, publishAt }) 
   return res.data; // includes the new video's id
 }
 
-module.exports = { uploadVideo };
+/**
+ * Adds a video to a playlist. Safe to call after uploadVideo() succeeds.
+ * @param {string} videoId
+ * @param {string} playlistId
+ */
+async function addVideoToPlaylist(videoId, playlistId) {
+  const youtube = getYoutubeClient();
+
+  await youtube.playlistItems.insert({
+    part: ['snippet'],
+    requestBody: {
+      snippet: {
+        playlistId,
+        resourceId: {
+          kind: 'youtube#video',
+          videoId,
+        },
+      },
+    },
+  });
+}
+
+module.exports = { uploadVideo, addVideoToPlaylist };
