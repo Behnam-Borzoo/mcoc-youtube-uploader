@@ -1,6 +1,6 @@
 // src/get-refresh-token.js
-// این اسکریپت رو فقط یک‌بار، روی سیستمی که مرورگر داره (نه لزوماً VPS)، اجرا کن
-// تا refresh token برای YouTube + Drive API بگیری.
+// Run this ONCE, on a machine with a browser (not necessarily the VPS),
+// to obtain a refresh token for YouTube + Drive API access.
 
 require('dotenv').config();
 const { google } = require('googleapis');
@@ -20,36 +20,36 @@ const SCOPES = [
 ];
 
 const authUrl = oauth2Client.generateAuthUrl({
-  access_type: 'offline',
-  prompt: 'consent',
+  access_type: 'offline', // required to receive a refresh_token
+  prompt: 'consent',      // forces Google to always issue a fresh refresh_token
   scope: SCOPES,
 });
 
-console.log('\n=== مرحله ۱ ===');
-console.log('این لینک رو توی مرورگر باز کن و با اکانت گوگل کانالت لاگین کن:\n');
+console.log('\n=== Step 1 ===');
+console.log('Open this link in your browser and log in with your channel\'s Google account:\n');
 console.log(authUrl);
-console.log('\nمنتظر می‌مونم تا اجازه بدی...\n');
+console.log('\nWaiting for you to grant access...\n');
 
 const server = http.createServer(async (req, res) => {
   if (req.url.startsWith('/oauth2callback')) {
     const qs = new url.URL(req.url, 'http://localhost:3000').searchParams;
     const code = qs.get('code');
 
-    res.end('موفق بود! می‌تونی این تب رو ببندی و برگردی به ترمینال.');
+    res.end('Success! You can close this tab and go back to the terminal.');
     server.close();
 
     try {
       const { tokens } = await oauth2Client.getToken(code);
-      console.log('\n=== موفقیت‌آمیز بود! ===\n');
-      console.log('>>> این خط رو کپی کن و توی فایل .env روی VPS بذار: <<<\n');
+      console.log('\n=== Success! ===\n');
+      console.log('>>> Copy this line into your .env file on the VPS: <<<\n');
       console.log(`GOOGLE_REFRESH_TOKEN=${tokens.refresh_token}`);
       console.log('\n');
     } catch (err) {
-      console.error('خطا در گرفتن توکن:', err.message);
+      console.error('Error obtaining token:', err.message);
     }
   }
 });
 
 server.listen(3000, () => {
-  console.log('سرور موقت روی پورت 3000 بالا اومد، منتظر callback از گوگل...');
+  console.log('Temporary server listening on port 3000, waiting for Google callback...');
 });
