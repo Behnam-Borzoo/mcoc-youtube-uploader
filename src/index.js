@@ -23,14 +23,27 @@ const {
   cleanupOldUploadedFiles,
 } = require('./drive');
 const { uploadVideo } = require('./youtube');
-const { getNextPublishSlot } = require('./schedule');
+const { computeNextPublishSlot, commitPublishSlot } = require('./schedule');
 
 // Turns a filename into YouTube-ready metadata.
 // Example input: "2026-08-30_MCOC_Battlegrounds.mp4"
+const YOUTUBE_TITLE_MAX_LENGTH = 100;
+const SUFFIX = ' | BEHNAM BORZOO';
+
 function buildMetadataFromFilename(filename) {
-  const base = filename.replace(/\.[^/.]+$/, ''); // strip extension
-  const title = `${base.replace(/_/g, ' ')} | BEHNAM BORZOO`;
+  const base = filename.replace(/\.[^/.]+$/, '').replace(/_/g, ' '); // strip extension, underscores -> spaces
+
+  // YouTube rejects titles over 100 characters ("invalid or empty video title").
+  // Truncate the base name so base + suffix always fits, and keep the full
+  // original name in the description so nothing is lost.
+  const maxBaseLength = YOUTUBE_TITLE_MAX_LENGTH - SUFFIX.length;
+  const truncatedBase =
+    base.length > maxBaseLength ? base.slice(0, maxBaseLength - 1).trim() + '…' : base;
+  const title = `${truncatedBase}${SUFFIX}`;
+
   const description = [
+    base,
+    '',
     'MCOC (Marvel Contest of Champions) stream VOD - Battlegrounds / Arena',
     '',
     'Follow on Twitch: twitch.tv/BehnamBorzoo',
@@ -53,7 +66,7 @@ async function processOneVideo(file) {
   });
 
   const { title, description, tags } = buildMetadataFromFilename(file.name);
-  const publishAt = getNextPublishSlot();
+  const publishAt = computeNextPublishSlot();
 
   console.log(`  -> Scheduled publish time: ${publishAt}`);
 
@@ -64,6 +77,9 @@ async function processOneVideo(file) {
     tags,
     publishAt,
   });
+
+  // Only now, after a confirmed successful upload, do we reserve the slot.
+  commitPublishSlot(publishAt);
 
   console.log(`  -> Upload successful. Video ID: ${result.id}`);
 
