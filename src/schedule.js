@@ -1,7 +1,7 @@
 // src/schedule.js
-// مسئول محاسبه اینکه ویدیوی بعدی باید کِی پابلیک بشه.
-// یه فایل ساده JSON روی دیسک نگه می‌داره که آخرین اسلات رزرو شده رو یادش بمونه
-// (تا اگه چند ویدیو پشت سر هم صف شدن، روی هم نیفتن).
+// Figures out when the next uploaded video should go public.
+// Keeps a small JSON file on disk to remember the last reserved slot,
+// so multiple queued videos don't get scheduled for the same time.
 
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +19,7 @@ function writeState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-// تاریخ/ساعت بعدی publish رو بر اساس تنظیمات .env محاسبه می‌کنه
+// Computes the next publish datetime based on .env settings.
 function getNextPublishSlot() {
   const state = readState();
   const hour = parseInt(process.env.PUBLISH_HOUR || '18', 10);
@@ -32,7 +32,7 @@ function getNextPublishSlot() {
     baseDate.setDate(baseDate.getDate() + daysBetween);
   } else {
     baseDate = new Date();
-    // اگه امروز از ساعت publish گذشته، از فردا شروع کن
+    // If today's publish time has already passed, start from tomorrow.
     if (
       baseDate.getHours() > hour ||
       (baseDate.getHours() === hour && baseDate.getMinutes() >= minute)
