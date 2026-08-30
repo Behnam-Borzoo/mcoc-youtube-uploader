@@ -7,6 +7,15 @@
 
 require('dotenv').config();
 const cron = require('node-cron');
+
+// Safety nets: without these, an error not caught anywhere else crashes the
+// process silently (PM2 just shows a restart with no explanation in the logs).
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled promise rejection:', err && err.message ? err.message : err);
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err && err.message ? err.message : err);
+});
 const {
   listPendingVideos,
   getFileStream,
@@ -35,6 +44,14 @@ async function processOneVideo(file) {
   console.log(`[${new Date().toISOString()}] Processing: ${file.name}`);
 
   const stream = await getFileStream(file.id);
+
+  // IMPORTANT: without this listener, an error emitted by the Drive download
+  // stream (auth failure, network hiccup, etc.) becomes an uncaught exception
+  // and crashes the whole Node process silently.
+  stream.on('error', (err) => {
+    console.error(`  -> Drive stream error while reading "${file.name}":`, err.message);
+  });
+
   const { title, description, tags } = buildMetadataFromFilename(file.name);
   const publishAt = getNextPublishSlot();
 
