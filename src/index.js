@@ -22,7 +22,7 @@ const {
   moveToUploadedFolder,
   cleanupOldUploadedFiles,
 } = require('./drive');
-const { uploadVideo } = require('./youtube');
+const { uploadVideo, addVideoToPlaylist } = require('./youtube');
 const { computeNextPublishSlot, commitPublishSlot } = require('./schedule');
 
 // Turns a filename into YouTube-ready metadata.
@@ -100,6 +100,18 @@ async function processOneVideo(file) {
   commitPublishSlot(publishAt);
 
   console.log(`  -> Upload successful. Video ID: ${result.id}`);
+
+  const playlistId = process.env.YOUTUBE_PLAYLIST_ID;
+  if (playlistId) {
+    try {
+      await addVideoToPlaylist(result.id, playlistId);
+      console.log(`  -> Added to playlist.`);
+    } catch (err) {
+      // Don't fail the whole upload just because the playlist step failed —
+      // the video is already live/scheduled, that matters more.
+      console.error(`  -> Failed to add video to playlist:`, err.message);
+    }
+  }
 
   await moveToUploadedFolder(file.id);
   console.log(`  -> File moved to the "uploaded" folder.`);
