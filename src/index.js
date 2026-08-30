@@ -48,7 +48,25 @@ function buildMetadataFromFilename(filename) {
     '',
     'Follow on Twitch: twitch.tv/BehnamBorzoo',
   ].join('\n');
-  const tags = ['MCOC', 'Marvel Contest of Champions', 'Battlegrounds', 'Arena', 'BehnamBorzoo'];
+  const tags = [
+    'MCOC',
+    'Marvel Contest of Champions',
+    'Battlegrounds',
+    'Arena',
+    'BehnamBorzoo',
+    'AW',
+    'AQ',
+    'Alliance War',
+    'Alliance Quest',
+    'Kabam',
+    'MCOC Gameplay',
+    'Twitch VOD',
+    'Gaming Livestream',
+    'Mobile Gaming',
+    'Marvel Games',
+    'MCOC Tips',
+    'MCOC Strategy',
+  ];
 
   return { title, description, tags };
 }
