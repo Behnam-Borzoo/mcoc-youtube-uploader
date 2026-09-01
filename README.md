@@ -69,6 +69,8 @@ For later updates:
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
+pm2 restart mcoc-youtube-uploader
+pm2 logs mcoc-youtube-uploader --lines 30
 ```
 
 ## Daily Usage
