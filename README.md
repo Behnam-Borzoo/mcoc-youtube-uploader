@@ -83,13 +83,6 @@ Just drop the VOD (as mp4) into the import folder on Drive. Everything else runs
 Suggested filename convention: `DD.MM.YYYY |Title Here` (e.g. `04.08.2026 |Marvel Contest of Champions Community - Live Gameplay - AQ, AW, Battlegrounds, Events & Arena.mp4`)
 (this is used directly as the YouTube video title — it's automatically truncated to YouTube's 100-character limit if too long, with the full name kept in the video description)
 
-## Notes
-
-- **YouTube API daily quota**: default 10,000 units, each upload costs ~1,600 units (~6 uploads/day)
-- The file needs a video **mimeType** to be detected in the import folder
-- Each cron run processes only **one file**, to keep quota and bandwidth usage predictable
-- The cleanup job checks Drive's `modifiedTime` on files in the "uploaded" folder, which updates automatically when a file is moved there
-
 - Changing the Next Upload/Publish Date
 
 There are two different cases, depending on whether the daily chain has already started:
@@ -99,38 +92,44 @@ Case A — no successful upload has happened yet (the chain hasn't started): Jus
 PUBLISH_START_DATE=2026-09-05
 
 Then restart:
-
+```bash
 bash
 pm2 restart mcoc-youtube-uploader
-
+```
 Case B — a daily chain is already running and you want to push the next date: PUBLISH_START_DATE is ignored once uploads have started — the schedule instead comes from schedule-state.json in the project folder, which remembers the last date that was reserved.
 
 Edit it directly:
-
+```bash
 bash
 cd /opt/mcoc-youtube-uploader
 nano schedule-state.json
-
+```
 It looks like:
-
+```bash
 json
 {
   "lastScheduledDate": "2026-09-03T19:00:00.000Z"
 }
-
+```
 Set this to one day before the date you actually want the next video to go live on (the next upload automatically adds +1 day). For example, to make the next upload land on 2026-09-10 at 19:00:
-
+```bash
 json
 {
   "lastScheduledDate": "2026-09-09T19:00:00.000Z"
 }
-
+```
 Or the simpler option: delete the file and let PUBLISH_START_DATE take over again:
-
+```bash
 bash
 rm schedule-state.json
-
+```
 Then set the desired PUBLISH_START_DATE in .env and restart:
 
 bash
 pm2 restart mcoc-youtube-uploader
+## Notes
+
+- **YouTube API daily quota**: default 10,000 units, each upload costs ~1,600 units (~6 uploads/day)
+- The file needs a video **mimeType** to be detected in the import folder
+- Each cron run processes only **one file**, to keep quota and bandwidth usage predictable
+- The cleanup job checks Drive's `modifiedTime` on files in the "uploaded" folder, which updates automatically when a file is moved there
